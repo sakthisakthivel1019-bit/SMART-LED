@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Smart LED Control{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+{% if session.get('user_id') %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-icon">✦</span><span> LUMI<span class="brand-light">CTRL</span><small>SMART LED SYSTEM</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav>
+      <a class="{% if request.endpoint=='dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span>▦</span> Dashboard</a>
+      <a class="{% if request.endpoint=='analysis' %}active{% endif %}" href="{{ url_for('analysis') }}"><span>◒</span> Analysis</a>
+      <a class="{% if request.endpoint=='calculator' %}active{% endif %}" href="{{ url_for('calculator') }}"><span>◷</span> LED Calculator</a>
+    </nav>
+    <div class="nav-label second">PREFERENCES</div>
+    <nav>
+      <a class="{% if request.endpoint=='settings' %}active{% endif %}" href="{{ url_for('settings') }}"><span>⚙</span> Settings</a>
+      <a class="{% if request.endpoint=='about' %}active{% endif %}" href="{{ url_for('about') }}"><span>ⓘ</span> About</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="avatar">{{ session.get('display_name','U')[0] }}</div><div><b>{{ session.get('display_name') }}</b><small>Administrator</small></div><a class="logout" href="{{ url_for('logout') }}" title="Log out">↗</a></div>
+  </aside>
+  <main class="main-area">
+    <header class="topbar"><div class="mobile-brand">✦ LUMICTRL</div><div class="crumb">Workspace <span>/</span> {% block crumb %}Dashboard{% endblock %}</div><div class="top-actions"><span class="live-dot"></span><span class="top-status">SYSTEM ONLINE</span><button class="icon-btn" title="Notifications">♧</button><div class="top-avatar">{{ session.get('display_name','U')[0] }}</div></div></header>
+    <section class="page-content">
+      {% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
+      {% block content %}{% endblock %}
+    </section>
+    <footer>SMART LED CONTROL SYSTEM <span>•</span> TEAM 20 DEV PROJECT</footer>
+  </main>
+</div>
+{% else %}{% block auth_content %}{% endblock %}{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body></html>

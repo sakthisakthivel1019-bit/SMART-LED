@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% block title %}Dashboard | LumiCtrl{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">OVERVIEW / LIVE CONTROL CENTER</div><h1>Smart LED Control Dashboard</h1><p>Live demo telemetry or ESP32 Bluetooth serial monitoring.</p></div><div class="date-chip" id="clock">Connecting clock…</div></div>
+<div class="panel connection-panel" style="margin-bottom:20px">
+ <div class="panel-head"><div><div class="eyebrow">BLUETOOTH DEVICE</div><h3>Connection manager</h3></div><span class="status-pill offline" id="connectionBadge"><i></i> Disconnected</span></div>
+ <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+  <div><label for="connectionMode">Connection mode</label><select id="connectionMode" class="form-control"><option value="demo">Demo Bluetooth (simulated)</option><option value="serial">Real ESP32 Bluetooth COM port</option></select></div>
+  <div id="portWrap" style="display:none"><label for="comPort">Paired COM port</label><input id="comPort" class="form-control" placeholder="COM5"></div>
+  <button class="outline-btn" id="connectBtn">Connect</button><button class="outline-btn" id="disconnectBtn">Disconnect</button>
+ </div><p class="hint" id="connectionMessage">Demo mode simulates a Bluetooth link and live telemetry. It does not connect to physical hardware.</p>
+</div>
+<div class="dashboard-grid">
+ <div class="left-stack">
+  <div class="panel"><div class="panel-head"><div><div class="eyebrow">DEVICE INFORMATION</div><h3>{{ settings.device_name }}</h3></div><span class="demo-tag" id="modeTag">WAITING</span></div>
+   <div class="info-line"><span>Connection</span><b id="deviceConnection">Disconnected</b></div><div class="info-line"><span>Device</span><b id="deviceName">{{ settings.device_name }}</b></div><div class="info-line"><span>Last update</span><b id="lastSeen">—</b></div><div class="info-line"><span>Live readings captured</span><b id="readingCount">0</b></div>
+  </div>
+  <div class="panel"><div class="panel-head"><div><div class="eyebrow">RECENT ACTIVITY</div><h3>Live operation history</h3></div><a class="text-link" href="{{ url_for('analysis') }}">View analysis →</a></div><div id="activityList"><p class="muted">Connect to begin tracking.</p></div></div>
+ </div>
+ <div class="center-stack">
+  <div class="panel led-panel"><div class="panel-head"><div><div class="eyebrow">LIVE MONITORING</div><h3>LED output</h3></div><span class="status-pill offline" id="ledStatus"><i></i> OFF</span></div>
+   <div class="led-visual" id="ledVisual"><div class="led-halo"></div><div class="bulb">✦</div><small>LED OUTPUT</small></div>
+   <div class="led-stats"><div><span>BRIGHTNESS</span><b id="brightnessValue">0<small>%</small></b></div><div><span>OPERATING TIME</span><b id="operatingTime">0<small>s</small></b></div><div><span>LIVE POWER*</span><b id="powerValue">—<small> mW</small></b></div></div>
+   <p class="hint">*Power is simulated in demo mode. Real COM mode reports only fields sent by the ESP32.</p>
+  </div>
+  <div class="panel control-panel"><div class="panel-head"><div><div class="eyebrow">MANUAL OPERATION</div><h3>LED control</h3></div><span class="muted tiny">ON / OFF / PWM</span></div>
+   <div class="power-controls"><button class="power-btn on" id="onBtn"><span>⏻</span> Turn ON</button><button class="power-btn off" id="offBtn"><span>⏻</span> Turn OFF</button></div>
+   <div class="slider-head"><label for="brightness">Brightness level</label><b id="sliderValue">70%</b></div><input type="range" id="brightness" min="1" max="100" value="70"><div class="range-labels"><span>1% · DIM</span><span>100% · MAX</span></div>
+   <button class="primary-btn full" id="applyBtn">Apply brightness <span>→</span></button><div class="control-message" id="controlMessage">Connect first to enable LED controls.</div>
+  </div>
+ </div>
+</div>
+<div class="metric-grid" style="margin-top:20px"><div class="metric-card"><span>LIVE VOLTAGE*</span><b id="voltageValue">—</b><small>Demo estimate</small></div><div class="metric-card"><span>LIVE CURRENT*</span><b id="currentValue">—</b><small>Demo estimate</small></div><div class="metric-card"><span>BOARD TEMP*</span><b id="temperatureValue">—</b><small>Demo estimate</small></div><div class="metric-card"><span>SESSION READINGS</span><b id="readingCount2">0</b><small>Captured since launch</small></div></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static',filename='js/live.js') }}"></script>{% endblock %}

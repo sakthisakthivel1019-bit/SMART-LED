@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block title %}Live Analysis | LumiCtrl{% endblock %}{% block crumb %}Analysis{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">REAL-TIME DATA / INSIGHTS</div><h1>Live System Analysis</h1><p>Charts refresh automatically from readings captured by the dashboard.</p></div><span class="date-chip" id="analysisMode">Waiting for readings</span></div>
+<div class="metric-grid"><div class="metric-card"><span>READINGS CAPTURED</span><b id="aReadings">0</b><small>Stored samples</small></div><div class="metric-card"><span>ON COMMANDS</span><b id="aOn">0</b><small>Logged ON events</small></div><div class="metric-card"><span>AVG. BRIGHTNESS</span><b id="aBrightness">0%</b><small>Recent sample average</small></div><div class="metric-card"><span>OFF COMMANDS</span><b id="aOff">0</b><small>Logged OFF events</small></div></div>
+<div class="charts-grid">
+ <div class="panel chart-panel"><div class="panel-head"><div><div class="eyebrow">COMMAND DISTRIBUTION</div><h3>Command frequency</h3></div><span class="chart-tag">LIVE</span></div><div class="chart-wrap"><canvas id="pieChart"></canvas></div></div>
+ <div class="panel chart-panel"><div class="panel-head"><div><div class="eyebrow">CURRENT OUTPUT</div><h3>Brightness over time</h3></div><span class="chart-tag">LIVE</span></div><div class="chart-wrap"><canvas id="brightnessChart"></canvas></div></div>
+ <div class="panel chart-panel wide"><div class="panel-head"><div><div class="eyebrow">ENERGY PROFILE</div><h3>Estimated power over time</h3></div><span class="chart-tag">DEMO TELEMETRY</span></div><div class="chart-wrap line-wrap"><canvas id="powerChart"></canvas></div></div>
+ <div class="panel insights"><div class="eyebrow">LIVE SUMMARY</div><h3>Analysis notes</h3><div class="insight-row"><span class="insight-icon">↗</span><div><b id="insight1">Waiting for first reading</b><p>LED activation commands recorded during this session.</p></div></div><div class="insight-row"><span class="insight-icon">◉</span><div><b id="insight2">No brightness samples yet</b><p>Average is calculated from captured telemetry, not seeded sample data.</p></div></div><div class="insight-row"><span class="insight-icon">⌁</span><div><b id="insight3">No live power samples yet</b><p>Power values are estimates in demo mode and unavailable unless hardware reports them.</p></div></div></div>
+ <div class="panel chart-panel"><div class="panel-head"><div><div class="eyebrow">LATEST TELEMETRY</div><h3>Recent readings</h3></div><span class="chart-tag">LATEST 10</span></div><div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>Time</th><th>LED</th><th>Brightness</th><th>Power</th><th>Mode</th></tr></thead><tbody id="readingRows"><tr><td colspan="5">No readings yet.</td></tr></tbody></table></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let pie, bright, power;
+const common={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#aeb8ca',usePointStyle:true,padding:18}}}};
+function initCharts(){
+ pie=new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{labels:['ON','OFF','DIM'],datasets:[{data:[0,0,0],backgroundColor:['#8b7cff','#36c9b4','#f3b75e'],borderWidth:0}]},options:{...common,cutout:'68%'}});
+ bright=new Chart(document.getElementById('brightnessChart'),{type:'line',data:{labels:[],datasets:[{label:'Brightness %',data:[],borderColor:'#8b7cff',backgroundColor:'rgba(139,124,255,.14)',fill:true,tension:.3}]},options:{...common,scales:{x:{ticks:{color:'#9aa7bb',maxTicksLimit:6},grid:{display:false}},y:{min:0,max:100,ticks:{color:'#9aa7bb'},grid:{color:'#273247'}}}}});
+ power=new Chart(document.getElementById('powerChart'),{type:'line',data:{labels:[],datasets:[{label:'Estimated power (mW)',data:[],borderColor:'#36c9b4',backgroundColor:'rgba(54,201,180,.12)',fill:true,tension:.3}]},options:{...common,scales:{x:{ticks:{color:'#9aa7bb',maxTicksLimit:8},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#9aa7bb'},grid:{color:'#273247'}}}}});
+}
+async function refreshAnalysis(){
+ try{
+  const r=await fetch('/api/analysis'); const d=await r.json();
+  document.getElementById('aReadings').textContent=d.total_readings;
+  document.getElementById('aOn').textContent=d.counts.ON;
+  document.getElementById('aOff').textContent=d.counts.OFF;
+  document.getElementById('aBrightness').textContent=d.average_brightness+'%';
+  document.getElementById('analysisMode').textContent=d.connected?(d.mode==='demo'?'DEMO LIVE':'BLUETOOTH LIVE'):'Device disconnected';
+  pie.data.datasets[0].data=[d.counts.ON,d.counts.OFF,d.counts.DIM]; pie.update('none');
+  bright.data.labels=d.labels; bright.data.datasets[0].data=d.brightness; bright.update('none');
+  const rr=d.readings.slice(0,10).reverse();
+  power.data.labels=rr.map(x=>x.timestamp.slice(11,19));
+  power.data.datasets[0].data=rr.map(x=>x.power_mw);
+  power.update('none');
+  document.getElementById('insight1').textContent=d.counts.ON+' ON commands recorded';
+  document.getElementById('insight2').textContent=d.average_brightness+'% average brightness';
+  document.getElementById('insight3').textContent=d.total_readings+' live readings captured';
+  document.getElementById('readingRows').innerHTML=d.readings.slice(0,10).map(x=>`<tr><td>${x.timestamp.slice(11,19)}</td><td>${x.led_on?'ON':'OFF'}</td><td>${x.brightness}%</td><td>${x.power_mw==null?'—':x.power_mw+' mW'}</td><td>${x.mode}</td></tr>`).join('')||'<tr><td colspan="5">No readings yet. Connect the device on Dashboard.</td></tr>';
+ }catch(e){document.getElementById('analysisMode').textContent='Unable to refresh';}
+}
+document.addEventListener('DOMContentLoaded',()=>{initCharts();refreshAnalysis();setInterval(refreshAnalysis,3000);});
+</script>
+{% endblock %}
